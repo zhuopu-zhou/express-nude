@@ -9,17 +9,17 @@ app.get('/', (request, response) => {
     if (isSuccess == true) {
         response.send({'success': true})
     } else {
-        response.send({'success': false, 'message': 'missing input values'})
+        response.send({'success': false, 'message': `missing values of keys:${{...isSuccess}} `})
     }
 })
 
 app.post('/', (request, response) => {
-    const isSuccess = NoNudes(request, response, 'body', ['name', 'name.first', 'email', 'password'])
+    const isSuccess = NoNudes(request, response, 'body', ['name.last', 'name.first', 'email', 'password'])
     console.log(isSuccess)
     if (isSuccess == true) {
         response.send({'success': true})
     } else {
-        response.send({'success': false, 'message': 'missing input values'})
+        response.send({'success': false, 'message': `missing values of keys:${isSuccess} `})
     }
 })
 

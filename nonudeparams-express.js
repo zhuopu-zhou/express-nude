@@ -16,6 +16,7 @@ module.exports = (
     const subKeys = parseSubKeysIfDoesNotExists(keyString, params)
     if (subKeys.length > 0) {
         emptyKeys.push(subKeys)
+
     }
 
     if (!params[keyString] || params[keyString].length === 0) {
@@ -29,7 +30,7 @@ module.exports = (
   if (emptyKeys.length === 0) {
     return true;
   } else {
-    return false;
+    return emptyKeys;
   }
 };
 
@@ -42,7 +43,7 @@ function parseSubKeysIfDoesNotExists(keyString, params) {
           !params[substr[0]][substr[1]] ||
           params[substr[0]][substr[1]].length === 0
         ) {
-          return [substr[0], substr[1]];
+          return [substr[0]+"."+substr[1]];
         } else {
           return [];
         }
