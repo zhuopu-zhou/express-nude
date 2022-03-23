@@ -12,21 +12,20 @@ module.exports = (
   const params = request[expectedParameterSource];
   let emptyKeys = [];
   for (let i = 0; i < parameterKeys.length; i++) {
-    if (parameterKeys[i].includes(".")) {
-      substr = parameterKeys[i].split(".");
-
-      if (
-        !params[substr[0]][substr[1]] ||
-        params[substr[0]][substr[1]].length === 0
-      ) {
-        emptyKeys = emptyKeys.push(substr[0], substr[1]);
-      }
+    const keyString = parameterKeys[i]
+    const subKeys = parseSubKeysIfDoesNotExists(keyString, params)
+    if (subKeys.length > 0) {
+        emptyKeys.push(subKeys)
     }
 
-    if (!params[parameterKeys[i]] || params[parameterKeys[i]].length === 0) {
-      emptyKeys = emptyKeys.push(parameterKeys[i]);
+    if (!params[keyString] || params[keyString].length === 0) {
+        if (!keyString.includes(".")) {
+            emptyKeys.push(keyString);
+        }
     }
   }
+
+  console.log(emptyKeys)
   if (emptyKeys.length === 0) {
     return true;
   } else {
@@ -34,4 +33,20 @@ module.exports = (
   }
 };
 
-["fafs", "fsfs,gdfsgs,gfdsg,gfd"];
+
+
+function parseSubKeysIfDoesNotExists(keyString, params) {
+    if (keyString.includes(".")) {
+        let substr = keyString.split(".");
+        if (
+          !params[substr[0]][substr[1]] ||
+          params[substr[0]][substr[1]].length === 0
+        ) {
+          return [substr[0], substr[1]];
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
+}
