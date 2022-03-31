@@ -16,7 +16,7 @@ function Nude(request) {
  * @returns `isNude`: boolean and `missingKeys`: string[]
  */
 Nude.prototype.headers = function (requiredKeys) {
-  return nudeHandler('headers', requiredKeys)
+  return nudeHandler(this.request, 'headers', requiredKeys)
 }
 
 /**
@@ -25,7 +25,7 @@ Nude.prototype.headers = function (requiredKeys) {
  * @returns `isNude`: boolean and `missingKeys`: string[]
  */
 Nude.prototype.body = function (requiredKeys) {
-  return nudeHandler('body', requiredKeys)
+  return nudeHandler(this.request, 'body', requiredKeys)
 }
 
 /**
@@ -34,16 +34,14 @@ Nude.prototype.body = function (requiredKeys) {
  * @returns `isNude`: boolean and `missingKeys`: string[]
  */
 Nude.prototype.query = function (requiredKeys) {
-  return nudeHandler('query', requiredKeys)
+  return nudeHandler(this.request, 'query', requiredKeys)
 }
 
 /**
  * Private methods
  */
 const traverse = require('./traverse')
-function nudeHandler(expectedParameterSource, parameterKeys) {
-  const request = this.request
-
+function nudeHandler(request, expectedParameterSource, parameterKeys) {
   const params = request[expectedParameterSource]
   let emptyKeys = []
 
@@ -75,33 +73,43 @@ function parseSubKeysIfDoesNotExist(keyString, params) {
     if (keyString.includes('.')) {
         let keysArray = keyString.split('.')
 
-        let isMissingKeys = false
-        let missingKey = ''
-
-        const traversedParams = traverse(params)
-        const allParamKeys = traversedParams.nodes()
-
+        // O(NM); where `N` = keysArray.length and `M` is `allParamKeys`
         if (keysArray.length > 2) {
+          const traversedParams = traverse(params)
+          const allParamKeys = traversedParams.nodes()  
+          
+          let keysArrayCopy = keysArray
+
           for (let i = 0; i < keysArray.length; i++) {
             const currentKey = keysArray[i]
-            const currentParam = allParamKeys[i]
 
-            if (!currentParam[currentKey]) {
-              isMissingKeys = true
-              missingKey = currentKey
-              break
+            // Finds a matching key in the client's params.
+            // Once found, removes the matching key from the keys array copy
+            // TODO: - performance can be slightly more efficient by representing the `keysArrayCopy` as a stack
+            for (let j = 0; j < allParamKeys.length; j++) {
+              const currentParam = allParamKeys[j]
+              if (currentParam[currentKey]) {
+                keysArrayCopy = arrayRemove(keysArrayCopy, currentKey)
+              }
             }
           }
+
+          return keysArrayCopy.length == 0 ? '' : keyString
         } else if (!params[keysArray[0]] 
             || !params[keysArray[0]][keysArray[1]]
             || params[keysArray[0]][keysArray[1]].length === 0) {
-              isMissingKeys = true
               return keyString
         }
         
 
-        return isMissingKeys === true ? `${missingKey} in ${keyString}` : ''
+        return ''
     } else {
       return ''
     }
+}
+
+function arrayRemove(arr, value) { 
+  return arr.filter(function(element) { 
+      return element != value; 
+  });
 }

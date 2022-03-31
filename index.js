@@ -1,42 +1,87 @@
 const express = require('express')
 const app = express()
 app.use(express.json())
-const NoNudes = require('./nonudeparams-express')
 const Nudes = require('./nude-express')
 
-app.get('/', (request, response) => {
+/// A dummy GET endpoint validating a current user's password strength
+app.get('/password/validate', (request, response) => {
     const nudes = Nudes(request)
-    if (nudes.headers(['authorization']).isNude == true) {
-        // handle missing headers logic here
+
+    const headersHandler = nudes.headers(['authorization'])
+    if (headersHandler.isNude == true) {
+        // Handle missing headers logic here...
+        const responseObject = {
+            'success': false, 
+            'message': `Missing or invalid header values of keys: ${headersHandler.missingKeys.toString()}`
+        }
+
+        response.status(400)
+        response.send(responseObject)
+        return
     }
 
-    const queryHandler = nudes.query(['name.last', 'name.first', 'email.object.value.isValidated', 'password'])
-    
-    if (queryHandler.isNude == false) {
-        response.send({'success': true})
-    } else {
-        response.send({'success': false, 'message': `Missing or invalid values of keys: ${queryHandler.missingKeys.toString()}`})
+    const queryHandler = nudes.query(['email', 'new_password'])
+    if (queryHandler.isNude == true) {
+        // Handle missing query logic here...
+        const responseObject = {
+            'success': false, 
+            'message': `Missing or invalid query values of keys: ${queryHandler.missingKeys.toString()}`
+        }
+
+        response.status(400)
+        response.send(responseObject)
+        return
     }
+
+    /**
+     User required keys logic here...
+     ...
+     ...
+     ...
+     */
+
+    response.send({'success': true})
 })
 
-app.post('/', (request, response) => {
-    const nudeParamsHandler = NoNudes(request, 'body', ['name.last', 'name.first', 'email.object.value.isValidated', 'email.object.value.isCrazy', 'password'])
-    const nudeHeadersHandler = NoNudes(request, 'headers', ['authorization'])
-    const missingParamsKeys = JSON.stringify(nudeParamsHandler.keys)
-    const missingHeadersKeys = JSON.stringify(nudeHeadersHandler.keys)
+/// A dummy POST endpoint updating a current user's password
+app.post('/password/update', (request, response) => {
+    const nudes = Nudes(request)
 
-    if (nudeHeadersHandler.isNude == true) {
-        response.send({'success': false, 'message': `Missing or invalid headers values of keys: ${missingHeadersKeys}`})
-    } else if (nudeParamsHandler.isNude == true) {
-        response.send({'success': false, 'message': `Missing or invalid body values of keys: ${missingParamsKeys}`})
-    }else if (nudeHeadersHandler.isNude == false && nudeParamsHandler.isNude == false) {
-        /**
-         * do logic here...
-         */
-        response.send({'success': true})
-    } else {
-        response.send({'success': false, 'message': '....'})
+    const headersHandler = nudes.headers(['authorization'])
+    if (headersHandler.isNude == true) {
+        // Handle missing headers logic here...
+        const responseObject = {
+            'success': false, 
+            'message': `Missing or invalid header values of keys: ${headersHandler.missingKeys.toString()}`
+        }
+
+        response.status(400)
+        response.send(responseObject)
+        return
     }
+
+    // Nested objects demo
+    const bodyHandler = nudes.body(['credentials.email', 'credentials.password.new', 'credentials.password.old', 'id'])
+    if (bodyHandler.isNude == true) {
+        // Handle missing body logic here...
+        const responseObject = {
+            'success': false, 
+            'message': `Missing or invalid body values of keys: ${bodyHandler.missingKeys.toString()}`
+        }
+
+        response.status(400)
+        response.send(responseObject)
+        return
+    }
+
+    /**
+     User required keys logic here...
+     ...
+     ...
+     ...
+     */
+
+    response.send({'success': true})
 })
 
 app.listen(3000, () => {

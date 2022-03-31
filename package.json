@@ -1,5 +1,5 @@
 {
-  "name": "NoNudeParams",
+  "name": "Nude.js",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -7,9 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
+  "author": "Ahmed Bekhit & Zhuopu Zhou. April 2022.",
+  "license": "MIT",
+  "devDependencies": {
     "express": "^4.17.3"
+  },
+  "dependencies": {
   }
 }
