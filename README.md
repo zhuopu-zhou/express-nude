@@ -1,4 +1,4 @@
-# Nude.js
+# Nude.js (express-nude)
 
 Your nudes are safe with Nude.js. 
 
