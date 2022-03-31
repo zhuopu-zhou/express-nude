@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express()
 app.use(express.json())
-const Nudes = require('./nude-express')
+const Nudes = require('./index')
 
 /// A dummy GET endpoint validating a current user's password strength
 app.get('/password/validate', (request, response) => {
