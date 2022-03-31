@@ -4,22 +4,33 @@ app.use(express.json())
 const NoNudes = require('./nonudeparams-express')
 
 app.get('/', (request, response) => {
-    const isSuccess = NoNudes(request, response, 'query', ['name', 'email', 'password'])
-    console.log(isSuccess)
-    if (isSuccess == true) {
+    const nudeParamsHandler = NoNudes(request, 'query', ['name.last', 'name.first', 'email.object.value.isValidated', 'password'])
+    const missingKeys = JSON.stringify(nudeParamsHandler.keys)
+
+    if (nudeParamsHandler.isNude == false) {
         response.send({'success': true})
     } else {
-        response.send({'success': false, 'message': `missing values of keys:${{...isSuccess}} `})
+        response.send({'success': false, 'message': `Missing or invalid values of keys: ${missingKeys}`})
     }
 })
 
 app.post('/', (request, response) => {
-    const isSuccess = NoNudes(request, response, 'body', ['name.last', 'name.first', 'email', 'password'])
-    console.log(isSuccess)
-    if (isSuccess == true) {
+    const nudeParamsHandler = NoNudes(request, 'body', ['name.last', 'name.first', 'email.object.value.isValidated', 'email.object.value.isCrazy', 'password'])
+    const nudeHeadersHandler = NoNudes(request, 'headers', ['authorization'])
+    const missingParamsKeys = JSON.stringify(nudeParamsHandler.keys)
+    const missingHeadersKeys = JSON.stringify(nudeHeadersHandler.keys)
+
+    if (nudeHeadersHandler.isNude == true) {
+        response.send({'success': false, 'message': `Missing or invalid headers values of keys: ${missingHeadersKeys}`})
+    } else if (nudeParamsHandler.isNude == true) {
+        response.send({'success': false, 'message': `Missing or invalid body values of keys: ${missingParamsKeys}`})
+    }else if (nudeHeadersHandler.isNude == false && nudeParamsHandler.isNude == false) {
+        /**
+         * do logic here...
+         */
         response.send({'success': true})
     } else {
-        response.send({'success': false, 'message': `missing values of keys:${isSuccess} `})
+        response.send({'success': false, 'message': '....'})
     }
 })
 

@@ -1,53 +1,67 @@
-const { request, response } = require("express");
+const traverse = require('./traverse')
 
 module.exports = (
   request,
-  response,
   expectedParameterSource,
   parameterKeys
 ) => {
-  // if(expectedParameterSource.includes("body","params","query")===false){
-  //     return("invalid request type")
-  // }
   const params = request[expectedParameterSource];
   let emptyKeys = [];
   for (let i = 0; i < parameterKeys.length; i++) {
     const keyString = parameterKeys[i]
-    const subKeys = parseSubKeysIfDoesNotExists(keyString, params)
-    if (subKeys.length > 0) {
-        emptyKeys.push(subKeys)
+    const subKeys = expectedParameterSource == 'body' ? parseSubKeysIfDoesNotExist(keyString, params) : ''
 
+    if (subKeys.length > 0) {
+      emptyKeys.push(subKeys)
     }
 
     if (!params[keyString] || params[keyString].length === 0) {
-        if (!keyString.includes(".")) {
+        if (expectedParameterSource != 'body' || !keyString.includes('.')) {
             emptyKeys.push(keyString);
         }
     }
   }
 
-  console.log(emptyKeys)
   if (emptyKeys.length === 0) {
-    return true;
+    return { isNude: false, keys: [] };
   } else {
-    return emptyKeys;
+    return { isNude: true, keys: emptyKeys };
   }
 };
 
 
 
-function parseSubKeysIfDoesNotExists(keyString, params) {
-    if (keyString.includes(".")) {
-        let substr = keyString.split(".");
-        if (
-          !params[substr[0]][substr[1]] ||
-          params[substr[0]][substr[1]].length === 0
-        ) {
-          return [substr[0]+"."+substr[1]];
-        } else {
-          return [];
+function parseSubKeysIfDoesNotExist(keyString, params) {
+    if (keyString.includes('.')) {
+        let keysArray = keyString.split('.');
+
+        let isMissingKeys = false
+        let missingKey = '';
+
+        const traversedParams = traverse(params)
+        const allParamKeys = traversedParams.nodes()
+
+        if (keysArray.length > 2) {
+          for (let i = 0; i < keysArray.length; i++) {
+            const currentKey = keysArray[i]
+            const currentParam = allParamKeys[i]
+
+            if (!currentParam[currentKey]) {
+              isMissingKeys = true
+              missingKey = currentKey
+              break
+            }
+          }
+        } else if (!params[keysArray[0]] 
+            || !params[keysArray[0]][keysArray[1]]
+            || params[keysArray[0]][keysArray[1]].length === 0) {
+              isMissingKeys = true
+              return keyString
         }
-      } else {
-        return [];
-      }
+        
+
+        return isMissingKeys === true ? `${missingKey} in ${keyString}` : ''
+    } else {
+      return ''
+    }
 }
