@@ -2,10 +2,15 @@ const express = require('express')
 const app = express()
 app.use(express.json())
 const NoNudes = require('./nonudeparams-express')
+const Nudes = require('./nude-express')
 
 app.get('/', (request, response) => {
+    const nudes = Nudes(request)
+    const headersHandler = nudes.headers(['authorization'])
+    const queryHandler = nudes.query(['name.last', 'name.first', 'email.object.value.isValidated', 'password'])
+
     const nudeParamsHandler = NoNudes(request, 'query', ['name.last', 'name.first', 'email.object.value.isValidated', 'password'])
-    const missingKeys = JSON.stringify(nudeParamsHandler.keys)
+    const missingKeys = JSON.stringify(nudeParamsHandler.missingKeys)
 
     if (nudeParamsHandler.isNude == false) {
         response.send({'success': true})
