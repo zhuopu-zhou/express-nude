@@ -6,16 +6,16 @@ const Nudes = require('./nude-express')
 
 app.get('/', (request, response) => {
     const nudes = Nudes(request)
-    const headersHandler = nudes.headers(['authorization'])
+    if (nudes.headers(['authorization']).isNude == true) {
+        // handle missing headers logic here
+    }
+
     const queryHandler = nudes.query(['name.last', 'name.first', 'email.object.value.isValidated', 'password'])
-
-    const nudeParamsHandler = NoNudes(request, 'query', ['name.last', 'name.first', 'email.object.value.isValidated', 'password'])
-    const missingKeys = JSON.stringify(nudeParamsHandler.missingKeys)
-
-    if (nudeParamsHandler.isNude == false) {
+    
+    if (queryHandler.isNude == false) {
         response.send({'success': true})
     } else {
-        response.send({'success': false, 'message': `Missing or invalid values of keys: ${missingKeys}`})
+        response.send({'success': false, 'message': `Missing or invalid values of keys: ${queryHandler.missingKeys.toString()}`})
     }
 })
 
