@@ -1,89 +1,113 @@
-const express = require('express')
-const app = express()
-app.use(express.json())
-const Nudes = require('./nude-express')
+/**
+ * An object handling HTTP request's nude parameters
+ * @param {*} request the Express HTTP Request instance
+ * @returns a new object instance handling the given HTTP request
+ */
+module.exports = function(request) {
+  return new Nude(request)
+};
 
-/// A dummy GET endpoint validating a current user's password strength
-app.get('/password/validate', (request, response) => {
-    const nudes = Nudes(request)
+function Nude(request) {
+  this.request = request
+}
+/**
+ * A method scanning the HTTP request for any missing required keys. 
+ * @param {string[]} requiredKeys an array of strings defining the required keys in the request's headers
+ * @returns `isNude`: boolean and `missingKeys`: string[]
+ */
+Nude.prototype.headers = function (requiredKeys) {
+  return nudeHandler(this.request, 'headers', requiredKeys)
+}
 
-    const headersHandler = nudes.headers(['authorization'])
-    if (headersHandler.isNude == true) {
-        // Handle missing headers logic here...
-        const responseObject = {
-            'success': false, 
-            'message': `Missing or invalid header values of keys: ${headersHandler.missingKeys.toString()}`
-        }
+/**
+ * A method scanning the HTTP request for any missing required keys in the `body`. 
+ * @param {string[]} requiredKeys an array of strings defining the required keys in the request's body
+ * @returns `isNude`: boolean and `missingKeys`: string[]
+ */
+Nude.prototype.body = function (requiredKeys) {
+  return nudeHandler(this.request, 'body', requiredKeys)
+}
 
-        response.status(400)
-        response.send(responseObject)
-        return
+/**
+ * A method scanning the HTTP request for any missing required keys in the `query`. 
+ * @param {string[]} requiredKeys an array of strings defining the required keys in the request's `query`
+ * @returns `isNude`: boolean and `missingKeys`: string[]
+ */
+Nude.prototype.query = function (requiredKeys) {
+  return nudeHandler(this.request, 'query', requiredKeys)
+}
+
+/**
+ * Private methods
+ */
+const traverse = require('./traverse')
+function nudeHandler(request, expectedParameterSource, parameterKeys) {
+  const params = request[expectedParameterSource]
+  let emptyKeys = []
+
+  for (let i = 0; i < parameterKeys.length; i++) {
+    const keyString = parameterKeys[i]
+    const subKeys = expectedParameterSource == 'body' ? parseSubKeysIfDoesNotExist(keyString, params) : ''
+
+    if (subKeys.length > 0) {
+      emptyKeys.push(subKeys)
     }
 
-    const queryHandler = nudes.query(['email', 'new_password'])
-    if (queryHandler.isNude == true) {
-        // Handle missing query logic here...
-        const responseObject = {
-            'success': false, 
-            'message': `Missing or invalid query values of keys: ${queryHandler.missingKeys.toString()}`
+    if (!params[keyString] || params[keyString].length === 0) {
+        if (expectedParameterSource != 'body' || !keyString.includes('.')) {
+            emptyKeys.push(keyString)
         }
-
-        response.status(400)
-        response.send(responseObject)
-        return
     }
+  }
 
-    /**
-     User required keys logic here...
-     ...
-     ...
-     ...
-     */
+  if (emptyKeys.length === 0) {
+    return { isNude: false, missingKeys: [] }
+  } else {
+    return { isNude: true, missingKeys: emptyKeys }
+  }
+};
 
-    response.send({'success': true})
-})
+function parseSubKeysIfDoesNotExist(keyString, params) {
+    if (keyString.includes('.')) {
+        let keysArray = keyString.split('.')
 
-/// A dummy POST endpoint updating a current user's password
-app.post('/password/update', (request, response) => {
-    const nudes = Nudes(request)
+        // O(NM); where `N` = keysArray.length and `M` is `allParamKeys`
+        if (keysArray.length > 2) {
+          const traversedParams = traverse(params)
+          const allParamKeys = traversedParams.nodes()  
+          
+          let keysArrayCopy = keysArray
 
-    const headersHandler = nudes.headers(['authorization'])
-    if (headersHandler.isNude == true) {
-        // Handle missing headers logic here...
-        const responseObject = {
-            'success': false, 
-            'message': `Missing or invalid header values of keys: ${headersHandler.missingKeys.toString()}`
+          for (let i = 0; i < keysArray.length; i++) {
+            const currentKey = keysArray[i]
+
+            // Finds a matching key in the client's params.
+            // Once found, removes the matching key from the keys array copy
+            // TODO: - performance can be slightly more efficient by representing the `keysArrayCopy` as a stack
+            for (let j = 0; j < allParamKeys.length; j++) {
+              const currentParam = allParamKeys[j]
+              if (currentParam[currentKey]) {
+                keysArrayCopy = arrayRemove(keysArrayCopy, currentKey)
+              }
+            }
+          }
+
+          return keysArrayCopy.length == 0 ? '' : keyString
+        } else if (!params[keysArray[0]] 
+            || !params[keysArray[0]][keysArray[1]]
+            || params[keysArray[0]][keysArray[1]].length === 0) {
+              return keyString
         }
+        
 
-        response.status(400)
-        response.send(responseObject)
-        return
+        return ''
+    } else {
+      return ''
     }
+}
 
-    // Nested objects demo
-    const bodyHandler = nudes.body(['credentials.email', 'credentials.password.new', 'credentials.password.old', 'id'])
-    if (bodyHandler.isNude == true) {
-        // Handle missing body logic here...
-        const responseObject = {
-            'success': false, 
-            'message': `Missing or invalid body values of keys: ${bodyHandler.missingKeys.toString()}`
-        }
-
-        response.status(400)
-        response.send(responseObject)
-        return
-    }
-
-    /**
-     User required keys logic here...
-     ...
-     ...
-     ...
-     */
-
-    response.send({'success': true})
-})
-
-app.listen(3000, () => {
-    console.log('listening.... on 3000')
-})
+function arrayRemove(arr, value) { 
+  return arr.filter(function(element) { 
+      return element != value; 
+  });
+}

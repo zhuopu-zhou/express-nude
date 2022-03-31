@@ -12,4 +12,7 @@ This package offers convenient options to safely find nude parameters in your Ex
 
 ## Install
 
+## Upcoming Features
+-[] Handling an array of objects with the same schema (i.e. only accept arrays of `User` where `User` must have `{ id: string, email: string }`)
+
 ## License
