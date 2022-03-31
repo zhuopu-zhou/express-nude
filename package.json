@@ -6,7 +6,23 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "no parametes",
+    "parameters",
+    "missing body",
+    "missing query",
+    "missing headers",
+    "missing",
+    "headers",
+    "query",
+    "body",
+    "required headers",
+    "required",
+    "nude params",
+    "empty",
+    "express",
+    "expressjs"
+  ],
   "author": "Ahmed Bekhit & Zhuopu Zhou. April 2022.",
   "license": "MIT",
   "devDependencies": {
